@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IRON STRIKE - 3D Tactical Shooter</title>
+<meta name="description" content="A free browser-based 3D first-person shooter with 4 maps, Team Deathmatch, 1v1 and Free-For-All, and 8 weapons. Built with Three.js.">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- ============ IN-GAME HUD ============ -->
+<div id="hud" class="hidden">
+  <div id="scorebar"><span id="sbL"></span><span id="timer"></span><span id="sbR"></span></div>
+  <div id="modeTag"></div>
+  <canvas id="radar" width="150" height="150"></canvas>
+  <div id="killfeed"></div>
+  <div id="vignette"></div>
+  <div id="dmgind"></div>
+  <div id="crosshair"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><i class="dot"></i></div>
+  <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
+  <div id="scope"><div class="ring"></div><div class="h"></div><div class="v"></div></div>
+  <div id="msg"></div>
+  <div id="health"><div id="hpbar"><i id="hpfill"></i></div><span id="hptxt">100</span></div>
+  <div id="ammo">
+    <div id="wname"></div>
+    <div id="amtxt"><b id="mag"></b><span id="res"></span></div>
+    <div id="wsec"></div>
+  </div>
+  <div id="dead" class="hidden"><div id="deadTxt"></div><div id="deadSub"></div></div>
+  <div id="scoreboard" class="hidden"><h3>SCOREBOARD</h3><table></table></div>
+</div>
+
+<!-- ============ PAUSE ============ -->
+<div id="pause" class="overlay hidden">
+  <div class="panel small">
+    <h2>PAUSED</h2>
+    <button id="btnResume" class="btn primary">Resume</button>
+    <button id="btnQuit" class="btn">Quit to menu</button>
+    <p class="hint">WASD move - Shift sprint - C crouch - Space jump - LMB fire - RMB aim - R reload - 1/2/Q/wheel switch - Tab scoreboard</p>
+  </div>
+</div>
+
+<!-- ============ END OF MATCH ============ -->
+<div id="endscreen" class="overlay hidden">
+  <div class="panel">
+    <h1 id="endTitle"></h1>
+    <p id="endSub"></p>
+    <table id="endTable"></table>
+    <div class="row">
+      <button id="btnAgain" class="btn primary">Play again</button>
+      <button id="btnMenu" class="btn">Main menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MAIN MENU ============ -->
+<div id="menu" class="overlay">
+  <div class="menu-inner">
+    <header>
+      <div class="logo">IRON<span>STRIKE</span></div>
+      <div class="tag">3D TACTICAL SHOOTER</div>
+    </header>
+
+    <section>
+      <h2>1 &middot; Game mode</h2>
+      <div id="modes" class="cards"></div>
+    </section>
+
+    <section>
+      <h2>2 &middot; Map</h2>
+      <div id="maps" class="cards"></div>
+    </section>
+
+    <section class="two">
+      <div>
+        <h2>3 &middot; Primary weapon</h2>
+        <div id="primaries" class="cards weapons"></div>
+      </div>
+      <div>
+        <h2>4 &middot; Secondary weapon</h2>
+        <div id="secondaries" class="cards weapons"></div>
+      </div>
+    </section>
+
+    <section class="two">
+      <div>
+        <h2>Bot difficulty</h2>
+        <div id="difficulty" class="seg"></div>
+      </div>
+      <div class="sliders">
+        <label>Mouse sensitivity <input id="sens" type="range" min="0.2" max="3" step="0.05" value="1"><output id="sensOut">1.0</output></label>
+        <label>Field of view <input id="fov" type="range" min="60" max="110" step="1" value="80"><output id="fovOut">80</output></label>
+        <label>Volume <input id="vol" type="range" min="0" max="1" step="0.05" value="0.55"><output id="volOut">0.55</output></label>
+      </div>
+    </section>
+
+    <div class="startrow">
+      <button id="btnStart" class="btn primary big">DEPLOY</button>
+      <div class="controls">WASD move &middot; Shift sprint &middot; C crouch &middot; Space jump &middot; LMB fire &middot; RMB aim &middot; R reload &middot; 1/2/Q/wheel swap weapon &middot; Tab scoreboard &middot; Esc pause</div>
+    </div>
+    <footer>Fan-made, non-commercial project. Not affiliated with or endorsed by any game publisher. Weapon names are used descriptively.</footer>
+  </div>
+</div>
+
+<div id="loaderr" class="hidden"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

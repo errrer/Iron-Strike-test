@@ -1,0 +1,11 @@
+{
+  "name": "iron-strike",
+  "version": "1.0.0",
+  "description": "A free browser-based 3D first-person shooter: 4 maps, TDM / 1v1 / FFA, 8 weapons, bots.",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node tests/nav-test.mjs && python3 tests/smoke.py"
+  },
+  "license": "MIT"
+}
