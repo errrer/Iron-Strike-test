@@ -2,6 +2,7 @@ import { Game, MODES } from './game.js';
 import { HUD } from './hud.js';
 import { Sound } from './audio.js';
 import { WEAPONS, PRIMARIES, SECONDARIES, weaponBars } from './weapons.js';
+import { loadModels } from './gunmodels.js';
 import { MAP_IDS, MAP_INFO } from './maps.js';
 
 const $ = (id) => document.getElementById(id);
@@ -71,6 +72,13 @@ slider('sens', 'sensOut', 'sens', (v) => v.toFixed(2), (v) => { game.settings.se
 slider('fov', 'fovOut', 'fov', (v) => String(Math.round(v)), (v) => { game.settings.fov = v; });
 slider('vol', 'volOut', 'vol', (v) => v.toFixed(2), (v) => { sound.volume = v; if (sound.master) sound.master.gain.value = v; });
 
+// ---------------- models ----------------
+// Weapons with an `asset` (assets/models/<id>.json, baked from FBX) are loaded before the first match.
+const startBtn = $('btnStart');
+startBtn.disabled = true; startBtn.textContent = 'LOADING...';
+loadModels(WEAPONS).then((ids) => console.log('[models] loaded:', ids.join(', ') || 'none (procedural fallbacks)'))
+  .catch(() => {}).finally(() => { startBtn.disabled = false; startBtn.textContent = 'DEPLOY'; });
+
 // ---------------- flow ----------------
 function deploy() {
   save();
@@ -90,7 +98,7 @@ $('btnAgain').addEventListener('click', deploy);
 $('btnMenu').addEventListener('click', toMenu);
 $('btnQuit').addEventListener('click', toMenu);
 $('btnResume').addEventListener('click', () => game.resume());
-document.addEventListener('keydown', (e) => { if (e.code === 'Enter' && game.state === 'menu' && !$('menu').classList.contains('hidden')) deploy(); });
+document.addEventListener('keydown', (e) => { if (e.code === 'Enter' && game.state === 'menu' && !$('menu').classList.contains('hidden') && !startBtn.disabled) deploy(); });
 
 // ---------------- loop ----------------
 let last = performance.now();

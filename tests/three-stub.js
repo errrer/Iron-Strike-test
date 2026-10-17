@@ -42,13 +42,13 @@ class Attr {
   setXYZ(i, x, y, z) { this.array[i * 3] = x; this.array[i * 3 + 1] = y; this.array[i * 3 + 2] = z; }
 }
 export class BufferAttribute extends Attr { constructor(a, n) { super(a, n); } }
-export class BufferGeometry { constructor() { this.attributes = {}; } setAttribute(k, a) { this.attributes[k] = a; } dispose() {} }
+export class BufferGeometry { constructor() { this.attributes = {}; this.index = null; } setAttribute(k, a) { this.attributes[k] = a; } setIndex(i) { this.index = Array.from(i); } dispose() {} }
 class Geo extends BufferGeometry { constructor() { super(); this.attributes.uv = new Attr(new Float32Array(48), 2); } }
-export class BoxGeometry extends Geo {}
-export class CylinderGeometry extends Geo {}
-export class ConeGeometry extends Geo {}
+export class BoxGeometry extends Geo { constructor(w, h, d) { super(); this.kind = 'box'; this.p = [w, h, d]; } }
+export class CylinderGeometry extends Geo { constructor(rt, rb, h) { super(); this.kind = 'cyl'; this.p = [rt, rb, h]; } }
+export class ConeGeometry extends Geo { constructor(r, h) { super(); this.kind = 'cone'; this.p = [r, h]; } }
 export class PlaneGeometry extends Geo {}
-export class SphereGeometry extends Geo {}
+export class SphereGeometry extends Geo { constructor(r) { super(); this.kind = 'sphere'; this.p = [r]; } }
 class Mat { constructor(o = {}) { Object.assign(this, o); this.color = new Color(o.color); } }
 export class MeshStandardMaterial extends Mat {}
 export class MeshBasicMaterial extends Mat {}
