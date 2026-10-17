@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { WEAPONS, buildGun, PRIMARIES, SECONDARIES } from './weapons.js';
+import { WEAPONS, PRIMARIES, SECONDARIES } from './weapons.js';
+import { buildGun } from './gunmodels.js';
 import { buildMap } from './maps.js';
 import { Colliders, NavGraph, GRAVITY, raySphere, rayAABB } from './physics.js';
 import { buildWorld } from './world.js';
@@ -242,20 +243,28 @@ export class Game {
 
   buildVm(w) {
     const root = new THREE.Group(), gun = buildGun(w); root.add(gun);
-    const glove = new THREE.MeshStandardMaterial({ color: 0x2b3028, roughness: 0.9 }), sleeve = new THREE.MeshStandardMaterial({ color: 0x3b4a3a, roughness: 0.95 });
-    const m = w.model;
-    const add = (geo, mat, x, y, z, rx = 0, ry = 0) => { const me = new THREE.Mesh(geo, mat); me.position.set(x, y, z); me.rotation.set(rx, ry, 0); gun.add(me); };
-    const lz = m.pistol ? 0.05 : -(m.bodyL / 2 + (m.hand || 0.1) * 0.5) + 0.03;
-    // support hand + forearm
-    if (m.pistol) { add(new THREE.BoxGeometry(0.06, 0.07, 0.09), glove, -0.03, -0.075, 0.07); add(new THREE.BoxGeometry(0.07, 0.07, 0.3), sleeve, -0.1, -0.14, 0.22, 0.2, -0.35); }
-    else { add(new THREE.BoxGeometry(0.075, 0.075, 0.12), glove, -0.012, -m.bodyH / 2 - 0.035, lz); add(new THREE.BoxGeometry(0.075, 0.075, 0.38), sleeve, -0.1, -m.bodyH / 2 - 0.1, lz + 0.26, 0.3, -0.3); }
-    // trigger hand + forearm
-    add(new THREE.BoxGeometry(0.065, 0.09, 0.075), glove, 0.005, -m.bodyH / 2 - m.gripH * 0.5, m.bodyL * 0.28 + 0.01);
-    add(new THREE.BoxGeometry(0.075, 0.075, 0.38), sleeve, 0.07, -m.bodyH / 2 - m.gripH - 0.04, m.bodyL * 0.28 + 0.26, 0.45, 0.2);
-    const tex = this.flashTexture();
-    const flash = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), new THREE.MeshBasicMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-    flash.position.copy(gun.userData.muzzle); flash.visible = false; gun.add(flash);
-    return { root, gun, flash, sightY: gun.userData.sightY };
+    const u = gun.userData, G = u.grip, F = u.fore;
+    const glove = new THREE.MeshStandardMaterial({ color: 0x2a2f29, roughness: 0.9 });
+    const sleeve = new THREE.MeshStandardMaterial({ color: 0x3b4a3a, roughness: 0.95 });
+    const add = (w_, h_, d_, mt, x, y, z, rx = 0, ry = 0, rz = 0) => { const me = new THREE.Mesh(new THREE.BoxGeometry(w_, h_, d_), mt); me.position.set(x, y, z); me.rotation.set(rx, ry, rz); gun.add(me); };
+    // trigger hand: palm on the grip, thumb, trigger finger, forearm back towards the camera
+    add(0.048, 0.07, 0.055, glove, G.x + 0.004, G.y + 0.005, G.z);
+    add(0.014, 0.026, 0.05, glove, G.x - 0.03, G.y + 0.02, G.z - 0.005, 0, 0, 0.2);          // thumb
+    add(0.012, 0.012, 0.04, glove, G.x + 0.002, G.y + 0.03, G.z - 0.045);                    // trigger finger
+    add(0.07, 0.07, 0.36, sleeve, G.x + 0.045, G.y - 0.07, G.z + 0.24, 0.5, 0.18, 0);
+    // support hand
+    if (u.pistol) {
+      add(0.05, 0.06, 0.05, glove, F.x - 0.004, F.y + 0.01, F.z);
+      add(0.07, 0.07, 0.34, sleeve, F.x - 0.09, F.y - 0.08, F.z + 0.22, 0.5, -0.4, 0);
+    } else {
+      add(0.075, 0.05, 0.1, glove, F.x, F.y - 0.045, F.z);                                    // palm under the handguard
+      add(0.016, 0.05, 0.09, glove, F.x + 0.04, F.y - 0.015, F.z, 0, 0, -0.2);               // fingers around the side
+      add(0.016, 0.05, 0.07, glove, F.x - 0.04, F.y - 0.015, F.z, 0, 0, 0.2);                // thumb side
+      add(0.075, 0.07, 0.42, sleeve, F.x - 0.075, F.y - 0.1, F.z + 0.3, 0.38, -0.28, 0);
+    }
+    const flash = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), new THREE.MeshBasicMaterial({ map: this.flashTexture(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    flash.position.copy(u.muzzle); flash.visible = false; gun.add(flash);
+    return { root, gun, flash, sightY: u.sightY };
   }
 
   flashTexture() {

@@ -27,7 +27,7 @@ A free, browser-based **3D first-person shooter** in the style of modern arena s
 - Bots with line-of-sight vision, reaction time, burst fire, strafing and A\* pathfinding (3 difficulty levels)
 - Hitscan ballistics with damage fall-off, headshots, recoil, spread, ADS and sprint
 - Health regeneration, kill feed, hit markers, damage direction indicators, radar, scoreboard
-- Procedural textures and procedural WebAudio sound - **no external assets**
+- Procedural textures and WebAudio sound; guns are either your own baked models (the **VMP** is a custom FBX model) or detailed procedural stand-ins
 
 ## Controls
 
@@ -75,6 +75,10 @@ js/physics.js       collision, ray casting, navigation graph
 js/world.js         builds the Three.js scene from a map
 js/hud.js           HUD, radar, kill feed, scoreboard
 js/audio.js         procedural sound effects
+js/gunmodels.js     gun models: loads baked assets + procedural stand-ins
+assets/fbx/         source FBX models (vmp.fbx)
+assets/models/      baked models the game loads (vmp.json)
+tools/              FBX -> game model converter + preview scripts
 tests/              map/nav test + headless smoke test
 ```
 
@@ -84,6 +88,30 @@ tests/              map/nav test + headless smoke test
 node tests/nav-test.mjs   # every map has a connected nav graph and valid spawns
 python3 tests/smoke.py    # headless Chromium (Playwright): plays all modes with a stubbed Three.js
 ```
+
+## Using your own gun models (FBX)
+
+The VMP uses a custom model. To add more, model them in Blender (or anything that exports binary FBX) and bake them:
+
+```bash
+cp my_m4a1.fbx assets/fbx/m4a1.fbx
+python3 tools/fbx2model.py assets/fbx/m4a1.fbx m4a1 --length 0.85 --preview /tmp/m4a1.png
+```
+
+Then register it on the weapon in `js/weapons.js` (the `grip` / `fore` values are the names of the parts where the hands go):
+
+```js
+m4a1: { ..., asset: { id: 'm4a1', grip: 'grip', fore: 'handguard' } }
+```
+
+Tips for the converter (Python 3 + numpy only, no Blender needed):
+- Name a part `Stock` (or `Butt...`) so it knows which end is the back, and a part starting with `Mag` so it knows which way is down. Otherwise pass `--forward -x` / `--up +y` yourself.
+- Each part becomes one mesh coloured from its material's *Diffuse Color*. Textures and UVs are ignored.
+- `--length` is the gun's overall length in metres (the VMP is 0.62). The converter centres the model on the receiver and points the muzzle down -Z.
+- Use `--muzzle x,y,z` if the muzzle flash should come from somewhere other than the front-most point.
+- The `--preview` PNG shows side / iso / top / front views so you can check orientation and colours.
+
+If a model file is missing the game silently falls back to the procedural stand-in.
 
 ## Adding content
 
