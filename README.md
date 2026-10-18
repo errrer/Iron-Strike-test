@@ -27,7 +27,7 @@ A free, browser-based **3D first-person shooter** in the style of modern arena s
 - Bots with line-of-sight vision, reaction time, burst fire, strafing and A\* pathfinding (3 difficulty levels)
 - Hitscan ballistics with damage fall-off, headshots, recoil, spread, ADS and sprint
 - Health regeneration, kill feed, hit markers, damage direction indicators, radar, scoreboard
-- Procedural textures and procedural WebAudio sound - **no external assets**
+- Procedural textures and WebAudio sound; guns are either your own baked models (the **VMP** is a custom FBX model) or detailed procedural stand-ins
 
 ## Controls
 
@@ -41,8 +41,26 @@ A free, browser-based **3D first-person shooter** in the style of modern arena s
 | Right mouse | Aim down sights |
 | R | Reload |
 | 1 / 2 / Q / mouse wheel | Switch weapon |
+| V | Toggle first / third person camera (also in the menu and pause settings) |
 | Tab (hold) | Scoreboard |
 | Esc | Pause |
+
+## Multiplayer (V0.3)
+
+Click **MULTIPLAYER** on the main menu.
+
+- **Host a game** - creates a room and shows a **6-letter code**. Pick the mode, map and your loadout in the lobby, then press START MATCH.
+- **Join a game** - type the host's code. You can also join a match that is already running.
+- Up to **18 players** per room (1v1 Duel is limited to 2). All 3 modes and all 4 maps work online; Team Deathmatch auto-balances the teams.
+- Pause does not stop the match online. Esc / "Leave match" takes you out of the room.
+
+How it works: there is no game server. Players connect directly to each other with WebRTC (via [PeerJS](https://peerjs.com), loaded from a CDN, using its free public signalling server). The host's browser runs the match and streams the state to everyone else, with lag compensation for hits. So it keeps working on GitHub Pages, but:
+
+- The host needs a decent connection (an 18-player room uploads roughly 1.5-2 Mbit/s). If the host closes the tab, the room ends.
+- Movement is trusted from each client, so it is made for playing with friends, not for ranked/anti-cheat play.
+- Very strict firewalls / some mobile networks can block WebRTC; the free PeerJS relay usually gets around that.
+
+Tests: `python3 tests/mp-test.py` runs a host plus up to 18 simulated clients over a fake in-memory network.
 
 ## Run locally
 
@@ -75,6 +93,10 @@ js/physics.js       collision, ray casting, navigation graph
 js/world.js         builds the Three.js scene from a map
 js/hud.js           HUD, radar, kill feed, scoreboard
 js/audio.js         procedural sound effects
+js/gunmodels.js     gun models: loads baked assets + procedural stand-ins
+assets/fbx/         source FBX models (vmp.fbx)
+assets/models/      baked models the game loads (vmp.json)
+tools/              FBX -> game model converter + preview scripts
 tests/              map/nav test + headless smoke test
 ```
 
@@ -84,6 +106,30 @@ tests/              map/nav test + headless smoke test
 node tests/nav-test.mjs   # every map has a connected nav graph and valid spawns
 python3 tests/smoke.py    # headless Chromium (Playwright): plays all modes with a stubbed Three.js
 ```
+
+## Using your own gun models (FBX)
+
+The VMP uses a custom model. To add more, model them in Blender (or anything that exports binary FBX) and bake them:
+
+```bash
+cp my_m4a1.fbx assets/fbx/m4a1.fbx
+python3 tools/fbx2model.py assets/fbx/m4a1.fbx m4a1 --length 0.85 --preview /tmp/m4a1.png
+```
+
+Then register it on the weapon in `js/weapons.js` (the `grip` / `fore` values are the names of the parts where the hands go):
+
+```js
+m4a1: { ..., asset: { id: 'm4a1', grip: 'grip', fore: 'handguard' } }
+```
+
+Tips for the converter (Python 3 + numpy only, no Blender needed):
+- Name a part `Stock` (or `Butt...`) so it knows which end is the back, and a part starting with `Mag` so it knows which way is down. Otherwise pass `--forward -x` / `--up +y` yourself.
+- Each part becomes one mesh coloured from its material's *Diffuse Color*. Textures and UVs are ignored.
+- `--length` is the gun's overall length in metres (the VMP is 0.62). The converter centres the model on the receiver and points the muzzle down -Z.
+- Use `--muzzle x,y,z` if the muzzle flash should come from somewhere other than the front-most point.
+- The `--preview` PNG shows side / iso / top / front views so you can check orientation and colours.
+
+If a model file is missing the game silently falls back to the procedural stand-in.
 
 ## Adding content
 
@@ -97,3 +143,7 @@ Fan-made, non-commercial hobby project. It is not affiliated with, endorsed by, 
 ## License
 
 MIT (see `LICENSE`). Three.js is MIT licensed by its authors.
+
+## Easter egg
+
+Type `richtofen` anywhere (menu or in a match) and every soldier turns into the Richtofen model; type it again to turn it off. The model lives in `assets/models/richtofen.json`, baked from an OBJ with `python3 tools/obj2model.py model.obj richtofen`. It only changes your own screen, also in multiplayer.

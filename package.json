@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8080",
-    "test": "node tests/nav-test.mjs && python3 tests/smoke.py"
+    "test": "node tests/nav-test.mjs && python3 tests/smoke.py && python3 tests/mp-test.py"
   },
   "license": "MIT"
 }

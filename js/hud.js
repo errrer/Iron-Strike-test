@@ -5,7 +5,7 @@ export class HUD {
   constructor() {
     this.el = {};
     for (const id of ['hud', 'sbL', 'sbR', 'timer', 'radar', 'killfeed', 'crosshair', 'hitmarker', 'dmgind', 'vignette', 'hpfill', 'hptxt',
-      'wname', 'mag', 'res', 'wsec', 'msg', 'scope', 'dead', 'deadTxt', 'deadSub', 'scoreboard', 'pause', 'endscreen', 'endTitle', 'endSub', 'endTable', 'modeTag']) this.el[id] = $(id);
+      'wname', 'mag', 'res', 'wsec', 'msg', 'scope', 'dead', 'deadTxt', 'deadSub', 'scoreboard', 'pause', 'endscreen', 'endTitle', 'endSub', 'endTable', 'modeTag', 'netinfo']) this.el[id] = $(id);
     this.rctx = this.el.radar.getContext('2d');
     this.cache = {};
     this.msgT = 0; this.sbT = 0;
@@ -18,7 +18,7 @@ export class HUD {
     this.el.hud.classList.remove('hidden');
     this.el.endscreen.classList.add('hidden'); this.el.pause.classList.add('hidden'); this.el.dead.classList.add('hidden');
     this.el.killfeed.innerHTML = ''; this.el.dmgind.innerHTML = '';
-    this.el.modeTag.textContent = `${game.mode.name} - ${game.cfg.mapName}`;
+    this.el.modeTag.textContent = `${game.mode.name} - ${game.cfg.mapName}` + (game.net ? ` - ROOM ${game.net.code}` : '');
     // static radar map
     const b = game.map.bounds, S = 4, cv = document.createElement('canvas');
     cv.width = (b.x1 - b.x0) * S; cv.height = (b.z1 - b.z0) * S;
@@ -77,7 +77,7 @@ export class HUD {
     const won = game.mode.team ? win === p.team : win === p.team;
     e.endTitle.textContent = win === null ? 'DRAW' : (won ? 'VICTORY' : 'DEFEAT');
     e.endTitle.className = win === null ? 'draw' : (won ? 'win' : 'lose');
-    e.endSub.textContent = game.mode.team ? `Allies ${game.teamScore[0]} - ${game.teamScore[1]} Enemy` : `${[...game.actors].sort((a, b) => b.kills - a.kills)[0].name} wins with ${[...game.actors].sort((a, b) => b.kills - a.kills)[0].kills} kills`;
+    e.endSub.textContent = game.mode.team ? `Allies ${game.teamScore[p.team % 2]} - ${game.teamScore[1 - (p.team % 2)]} Enemy` : `${[...game.actors].sort((a, b) => b.kills - a.kills)[0].name} wins with ${[...game.actors].sort((a, b) => b.kills - a.kills)[0].kills} kills`;
     this.buildTable(game, e.endTable);
     e.endscreen.classList.remove('hidden');
     this.el.dead.classList.add('hidden');
@@ -96,7 +96,7 @@ export class HUD {
   update(game) {
     const p = game.player, w = p.weapon, e = this.el;
     // scores + timer
-    if (game.mode.team) { this.set('sbL', `ALLIES ${game.teamScore[0]}`); this.set('sbR', `${game.teamScore[1]} ENEMY`); }
+    if (game.mode.team) { this.set('sbL', `ALLIES ${game.teamScore[p.team % 2]}`); this.set('sbR', `${game.teamScore[1 - (p.team % 2)]} ENEMY`); }
     else {
       const sorted = [...game.actors].sort((a, b) => b.kills - a.kills);
       this.set('sbL', `YOU ${p.kills}`);
@@ -124,13 +124,14 @@ export class HUD {
     const sp = lerp(w.spread, w.adsSpread, p.ads) * (1 + moveF * 0.9 + p.heat * 0.7 + (p.onGround ? 0 : 2));
     const px = Math.min(80, 4 + sp * (window.innerHeight / 2) / Math.tan((game.camera.fov * Math.PI / 180) / 2));
     e.crosshair.style.setProperty('--gap', `${px.toFixed(1)}px`);
-    e.crosshair.style.opacity = p.ads > 0.3 || !p.alive ? '0' : '1';
+    e.crosshair.style.opacity = (p.ads > 0.3 && !game.tp) || !p.alive ? '0' : '1';
     // dead
     if (!p.alive) this.set('deadSub', `${this.deadWeapon || ''}  -  respawning in ${Math.max(0, Math.ceil(p.respawnT))}`);
     // scoreboard
     this.sbT -= game.dt || 1 / 60;
     e.scoreboard.classList.toggle('hidden', !game.showScore);
     if (game.showScore && this.sbT <= 0) { this.sbT = 0.25; this.buildTable(game, e.scoreboard.querySelector('table')); }
+    if (game.net) this.set('netinfo', game.net.role === 'host' ? `HOST - ${game.actors.length} players` : `PING ${Math.round(game.net.ping)} ms - ${game.actors.length} players`);
     this.drawRadar(game);
   }
 

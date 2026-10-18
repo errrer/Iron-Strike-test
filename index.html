@@ -17,6 +17,7 @@
 <div id="hud" class="hidden">
   <div id="scorebar"><span id="sbL"></span><span id="timer"></span><span id="sbR"></span></div>
   <div id="modeTag"></div>
+  <div id="netinfo"></div>
   <canvas id="radar" width="150" height="150"></canvas>
   <div id="killfeed"></div>
   <div id="vignette"></div>
@@ -38,10 +39,17 @@
 <!-- ============ PAUSE ============ -->
 <div id="pause" class="overlay hidden">
   <div class="panel small">
-    <h2>PAUSED</h2>
+    <h2 id="pauseTitle">PAUSED</h2>
     <button id="btnResume" class="btn primary">Resume</button>
     <button id="btnQuit" class="btn">Quit to menu</button>
-    <p class="hint">WASD move - Shift sprint - C crouch - Space jump - LMB fire - RMB aim - R reload - 1/2/Q/wheel switch - Tab scoreboard</p>
+    <div class="settings">
+      <h3>Settings</h3>
+      <div class="viewrow"><span>Camera view</span><div class="seg viewseg"></div></div>
+      <label>Mouse sensitivity <input id="sens2" type="range" min="0.2" max="3" step="0.05" value="1"><output id="sensOut2">1.0</output></label>
+      <label>Field of view <input id="fov2" type="range" min="60" max="110" step="1" value="80"><output id="fovOut2">80</output></label>
+      <label>Volume <input id="vol2" type="range" min="0" max="1" step="0.05" value="0.55"><output id="volOut2">0.55</output></label>
+    </div>
+    <p class="hint">WASD move - Shift sprint - C crouch - Space jump - LMB fire - RMB aim - R reload - 1/2/Q/wheel switch - V switch camera - Tab scoreboard</p>
   </div>
 </div>
 
@@ -93,6 +101,7 @@
         <div id="difficulty" class="seg"></div>
       </div>
       <div class="sliders">
+        <div class="viewrow"><span>Camera view</span><div class="seg viewseg"></div></div>
         <label>Mouse sensitivity <input id="sens" type="range" min="0.2" max="3" step="0.05" value="1"><output id="sensOut">1.0</output></label>
         <label>Field of view <input id="fov" type="range" min="60" max="110" step="1" value="80"><output id="fovOut">80</output></label>
         <label>Volume <input id="vol" type="range" min="0" max="1" step="0.05" value="0.55"><output id="volOut">0.55</output></label>
@@ -101,9 +110,52 @@
 
     <div class="startrow">
       <button id="btnStart" class="btn primary big">DEPLOY</button>
-      <div class="controls">WASD move &middot; Shift sprint &middot; C crouch &middot; Space jump &middot; LMB fire &middot; RMB aim &middot; R reload &middot; 1/2/Q/wheel swap weapon &middot; Tab scoreboard &middot; Esc pause</div>
+      <button id="btnMP" class="btn big alt">MULTIPLAYER</button>
+      <div class="controls">WASD move &middot; Shift sprint &middot; C crouch &middot; Space jump &middot; LMB fire &middot; RMB aim &middot; R reload &middot; 1/2/Q/wheel swap weapon &middot; V first/third person &middot; Tab scoreboard &middot; Esc pause</div>
     </div>
     <footer>Fan-made, non-commercial project. Not affiliated with or endorsed by any game publisher. Weapon names are used descriptively.</footer>
+  </div>
+</div>
+
+<!-- ============ MULTIPLAYER ============ -->
+<div id="mp" class="overlay hidden">
+  <div class="panel mpanel">
+    <h2>MULTIPLAYER</h2>
+    <div id="mpHome">
+      <label class="mpname">Callsign <input id="mpName" maxlength="14" autocomplete="off" spellcheck="false"></label>
+      <div class="mpcols">
+        <div class="mpbox">
+          <h3>Host a game</h3>
+          <p>Create a room and share the 6-letter code. Up to 18 players, any mode, any map.</p>
+          <button id="mpHostBtn" class="btn primary">Create room</button>
+        </div>
+        <div class="mpbox">
+          <h3>Join a game</h3>
+          <p>Got a code from a friend? Enter it here.</p>
+          <input id="mpCode" maxlength="6" placeholder="ABCDEF" autocomplete="off" spellcheck="false">
+          <button id="mpJoinBtn" class="btn primary">Join</button>
+        </div>
+      </div>
+      <p id="mpStatus" class="mpstatus"></p>
+      <button id="mpBack" class="btn">Back</button>
+    </div>
+    <div id="mpLobby" class="hidden">
+      <div class="mpcode">ROOM CODE <b id="mpCodeTxt">------</b> <button id="mpCopy" class="btn small">Copy</button></div>
+      <div class="mpgrid">
+        <label>Mode <select id="mpMode"></select></label>
+        <label>Map <select id="mpMap"></select></label>
+        <label>Primary <select id="mpPrim"></select></label>
+        <label>Secondary <select id="mpSec"></select></label>
+      </div>
+      <p id="mpInfo" class="mpinfo"></p>
+      <h3 class="mph">Players <span id="mpCount"></span></h3>
+      <table id="mpPlayers"></table>
+      <p id="mpLStatus" class="mpstatus"></p>
+      <div class="row">
+        <button id="mpStart" class="btn primary big">START MATCH</button>
+        <button id="mpLeave" class="btn">Leave room</button>
+      </div>
+    </div>
   </div>
 </div>
 

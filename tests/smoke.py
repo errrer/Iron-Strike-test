@@ -14,8 +14,8 @@ stub = open('tests/three-stub.js').read()
 
 errors = []
 SIM = """
-async ([mode, map, prim, sec, seconds, diff]) => {
-  const g = window.__game;
+async ([mode, map, prim, sec, seconds, diff, view]) => {
+  const g = window.__game; g.settings.view = view || 'first';
   g.start({mode, map, mapName: map, primary: prim, secondary: sec, difficulty: diff});
   g.state = 'playing'; document.getElementById('pause').classList.add('hidden');
   const dt = 1/60; const p = g.player; const out = {errors: []};
@@ -64,7 +64,8 @@ with sync_playwright() as pw:
     pg.click('#btnStart'); pg.wait_for_timeout(300)
     print('after deploy: hud visible =', pg.evaluate("() => !document.getElementById('hud').classList.contains('hidden')"), 'state =', pg.evaluate('() => window.__game.state'))
     runs = [('tdm','warehouse','vmp','g18',150,'normal'), ('1v1','dust','m4a1','m1911',120,'hard'), ('ffa','skyline','ak47','magnum',150,'normal'),
-            ('tdm','frostbite','kar98k','g18',120,'easy'), ('ffa','warehouse','m680','m1911',100,'hard'), ('1v1','frostbite','vmp','g18',90,'normal'), ('tdm','dust','ak47','magnum',100,'hard'), ('ffa','frostbite','m4a1','g18',100,'normal'), ('tdm','skyline','m680','m1911',100,'normal')]
+            ('tdm','frostbite','kar98k','g18',120,'easy'), ('ffa','warehouse','m680','m1911',100,'hard'), ('1v1','frostbite','vmp','g18',90,'normal'), ('tdm','dust','ak47','magnum',100,'hard'), ('ffa','frostbite','m4a1','g18',100,'normal'), ('tdm','skyline','m680','m1911',100,'normal'),
+            ('tdm','warehouse','vmp','g18',100,'normal','third'), ('ffa','dust','kar98k','magnum',100,'normal','third'), ('1v1','frostbite','m680','g18',80,'hard','third')]
     for r in runs:
         res = pg.evaluate(SIM, list(r))
         bad = res['errors'] or res['nanPos'] or res['outOfBounds']
@@ -77,6 +78,21 @@ with sync_playwright() as pw:
     print('forced end ->', pg.evaluate("() => ({state: window.__game.state, title: document.getElementById('endTitle').textContent, rows: document.querySelectorAll('#endTable tr').length})"))
     pg.click('#btnAgain'); pg.wait_for_timeout(200)
     print('play again state =', pg.evaluate('() => window.__game.state'))
+    # toggle controls: pause-menu button + V key
+    pg.evaluate("() => { window.__game.state = 'playing'; }")
+    pg.keyboard.press('KeyV'); pg.wait_for_timeout(100)
+    print('after V key view =', pg.evaluate('() => window.__game.settings.view'), 'buttons sel =', pg.evaluate("() => [...document.querySelectorAll('.viewseg .sel')].map(b => b.dataset.view)"))
+    pg.evaluate("() => document.querySelectorAll('.viewseg button[data-view=first]')[1].click()")
+    print('after pause-menu click view =', pg.evaluate('() => window.__game.settings.view'), 'saved =', pg.evaluate("() => JSON.parse(localStorage.getItem('ironstrike')).view"))
+    # easter egg: type "richtofen"
+    pg.evaluate("() => { const g = window.__game; g.start({mode:'tdm',map:'dust',mapName:'Dust',primary:'vmp',secondary:'g18',difficulty:'normal'}); g.state='playing'; }")
+    pg.keyboard.type('richtofen', delay=20); pg.wait_for_timeout(800)
+    egg = pg.evaluate("() => { const g = window.__game; return {on: g.richtofen, rich: g.actors.filter(a => a.mesh.rich && a.mesh.rich.visible).length, hidden: g.actors.every(a => a.mesh.parts.every(p => !p.visible)), n: g.actors.length, toast: document.getElementById('toast').textContent}; }")
+    print('easter egg on:', egg); assert egg['on'] and egg['rich'] == egg['n'] and egg['hidden'], egg
+    pg.evaluate("() => { const g = window.__game; for (let i = 0; i < 120; i++) g.frame(1/60); g.start({mode:'ffa',map:'dust',mapName:'Dust',primary:'vmp',secondary:'g18',difficulty:'normal'}); }")
+    print('new match keeps it:', pg.evaluate("() => window.__game.actors.every(a => a.mesh.rich && a.mesh.rich.visible)"))
+    pg.keyboard.type('richtofen', delay=20); pg.wait_for_timeout(300)
+    print('toggled off:', pg.evaluate("() => window.__game.richtofen === false && window.__game.actors.every(a => !a.mesh.rich.visible && a.mesh.parts.every(p => p.visible))"))
     b.close()
 print('\nRUNTIME ERRORS:', errors if errors else 'none')
 sys.exit(1 if errors else 0)
